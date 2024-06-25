@@ -1,7 +1,6 @@
 import pygame
 import sys
 
-
 pygame.init()
 
 
@@ -21,22 +20,17 @@ LINE_COLOR = (23, 145, 135)
 CIRCLE_COLOR = (239, 231, 200)
 CROSS_COLOR = (66, 66, 66)
 
-
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption('Tic Tac Toe')
 screen.fill(BG_COLOR)
-
 
 font = pygame.font.Font(None, 40)
 
 board = [[None]*BOARD_COLS for _ in range(BOARD_ROWS)]
 
-
 def draw_lines():
-    # Horizontal lines
     pygame.draw.line(screen, LINE_COLOR, (0, SQUARE_SIZE), (WIDTH, SQUARE_SIZE), LINE_WIDTH)
     pygame.draw.line(screen, LINE_COLOR, (0, 2 * SQUARE_SIZE), (WIDTH, 2 * SQUARE_SIZE), LINE_WIDTH)
-    # Vertical lines
     pygame.draw.line(screen, LINE_COLOR, (SQUARE_SIZE, 0), (SQUARE_SIZE, HEIGHT - 100), LINE_WIDTH)
     pygame.draw.line(screen, LINE_COLOR, (2 * SQUARE_SIZE, 0), (2 * SQUARE_SIZE, HEIGHT - 100), LINE_WIDTH)
 
@@ -46,8 +40,8 @@ def draw_figures():
             if board[row][col] == 'O':
                 pygame.draw.circle(screen, CIRCLE_COLOR, (int(col * SQUARE_SIZE + SQUARE_SIZE // 2), int(row * SQUARE_SIZE + SQUARE_SIZE // 2)), CIRCLE_RADIUS, CIRCLE_WIDTH)
             elif board[row][col] == 'X':
-                pygame.draw.line(screen, CROSS_COLOR, (col * SQUARE_SIZE + SPACE, row * SQUARE_SIZE + SQUARE_SIZE - SPACE), (col * SQUARE_SIZE + SQUARE_SIZE - SPACE, row * SQUARE_SIZE + SPACE), CROSS_WIDTH)
                 pygame.draw.line(screen, CROSS_COLOR, (col * SQUARE_SIZE + SPACE, row * SQUARE_SIZE + SPACE), (col * SQUARE_SIZE + SQUARE_SIZE - SPACE, row * SQUARE_SIZE + SQUARE_SIZE - SPACE), CROSS_WIDTH)
+                pygame.draw.line(screen, CROSS_COLOR, (col * SQUARE_SIZE + SPACE, row * SQUARE_SIZE + SQUARE_SIZE - SPACE), (col * SQUARE_SIZE + SQUARE_SIZE - SPACE, row * SQUARE_SIZE + SPACE), CROSS_WIDTH)
 
 def mark_square(row, col, player):
     board[row][col] = player
@@ -63,24 +57,24 @@ def is_board_full():
     return True
 
 def check_winner(player):
-    # Vertical win
     for col in range(BOARD_COLS):
         if board[0][col] == board[1][col] == board[2][col] == player:
-            draw_vertical_winning_line(col, player)
+            #draw_vertical_winning_line(col, player)
             return True
-    # Horizontal win
+
     for row in range(BOARD_ROWS):
         if board[row][0] == board[row][1] == board[row][2] == player:
-            draw_horizontal_winning_line(row, player)
+            #draw_horizontal_winning_line(row, player)
             return True
-    # Ascending diagonal win
+
     if board[2][0] == board[1][1] == board[0][2] == player:
-        draw_asc_diagonal(player)
+       # draw_asc_diagonal(player)
         return True
-    # Descending diagonal win
+
     if board[0][0] == board[1][1] == board[2][2] == player:
-        draw_desc_diagonal(player)
+        #draw_desc_diagonal(player)
         return True
+
     return False
 
 def draw_vertical_winning_line(col, player):
@@ -112,21 +106,61 @@ def restart():
         for col in range(BOARD_COLS):
             board[row][col] = None
 
+def minimax(board, depth, is_maximizing):
+    if check_winner('O'):
+        return 1
+    elif check_winner('X'):
+        return -1
+    elif is_board_full():
+        return 0
+
+    if is_maximizing:
+        best_score = -float('inf')
+        for row in range(BOARD_ROWS):
+            for col in range(BOARD_COLS):
+                if board[row][col] is None:
+                    board[row][col] = 'O'
+                    score = minimax(board, depth + 1, False)
+                    board[row][col] = None
+                    best_score = max(score, best_score)
+        return best_score
+    else:
+        best_score = float('inf')
+        for row in range(BOARD_ROWS):
+            for col in range(BOARD_COLS):
+                if board[row][col] is None:
+                    board[row][col] = 'X'
+                    score = minimax(board, depth + 1, True)
+                    board[row][col] = None
+                    best_score = min(score, best_score)
+        return best_score
+
+def ai_move():
+    best_score = -float('inf')
+    best_move = None
+    for row in range(BOARD_ROWS):
+        for col in range(BOARD_COLS):
+            if board[row][col] is None:
+                board[row][col] = 'O'
+                score = minimax(board, 0, False)
+                board[row][col] = None
+                if score > best_score:
+                    best_score = score
+                    best_move = (row, col)
+    return best_move
 
 draw_lines()
 
-
 player = 'X'
 game_over = False
-
 
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
-        if event.type == pygame.MOUSEBUTTONDOWN and not game_over:
-            mouseX = event.pos[0] 
+        if event.type == pygame.MOUSEBUTTONDOWN and not game_over and player == 'X':
+            mouseX = event.pos[0]
             mouseY = event.pos[1]
 
             clicked_row = mouseY // SQUARE_SIZE
@@ -140,8 +174,20 @@ while True:
                 elif is_board_full():
                     game_over = True
                     display_message('It\'s a draw!')
-                player = 'O' if player == 'X' else 'X'
+                player = 'O'
                 draw_figures()
+
+        if not game_over and player == 'O':
+            row, col = ai_move()
+            mark_square(row, col, player)
+            if check_winner(player):
+                game_over = True
+                display_message(f'Player {player} wins!')
+            elif is_board_full():
+                game_over = True
+                display_message('It\'s a draw!')
+            player = 'X'
+            draw_figures()
 
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_r:
