@@ -3,7 +3,6 @@ import sys
 
 pygame.init()
 
-
 WIDTH, HEIGHT = 300, 400  
 LINE_WIDTH = 15
 BOARD_ROWS, BOARD_COLS = 3, 3
@@ -14,7 +13,7 @@ CROSS_WIDTH = 25
 SPACE = SQUARE_SIZE // 4
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
-RED = (255, 0, 0)
+RED = (128, 128, 128)  # Dark gray color im just too lazy to change the whole thing
 BG_COLOR = (28, 170, 156)
 LINE_COLOR = (23, 145, 135)
 CIRCLE_COLOR = (239, 231, 200)
@@ -43,6 +42,23 @@ def draw_figures():
                 pygame.draw.line(screen, CROSS_COLOR, (col * SQUARE_SIZE + SPACE, row * SQUARE_SIZE + SPACE), (col * SQUARE_SIZE + SQUARE_SIZE - SPACE, row * SQUARE_SIZE + SQUARE_SIZE - SPACE), CROSS_WIDTH)
                 pygame.draw.line(screen, CROSS_COLOR, (col * SQUARE_SIZE + SPACE, row * SQUARE_SIZE + SQUARE_SIZE - SPACE), (col * SQUARE_SIZE + SQUARE_SIZE - SPACE, row * SQUARE_SIZE + SPACE), CROSS_WIDTH)
 
+    # Check for winning conditions and draw winning lines
+    if board[0][0] == board[1][1] == board[2][2] and board[0][0] is not None:
+        pygame.draw.line(screen, RED, (SPACE, SPACE), (WIDTH - SPACE, HEIGHT - 100 - SPACE), LINE_WIDTH)
+
+    if board[0][2] == board[1][1] == board[2][0] and board[0][2] is not None:
+        pygame.draw.line(screen, RED, (WIDTH - SPACE, SPACE), (SPACE, HEIGHT - 100 - SPACE), LINE_WIDTH)
+
+    for col in range(BOARD_COLS):
+        if board[0][col] == board[1][col] == board[2][col] and board[0][col] is not None:
+            pygame.draw.line(screen, RED, (col * SQUARE_SIZE + SQUARE_SIZE // 2, 0), (col * SQUARE_SIZE + SQUARE_SIZE // 2, HEIGHT - 100), LINE_WIDTH)
+            break
+
+    for row in range(BOARD_ROWS):
+        if board[row][0] == board[row][1] == board[row][2] and board[row][0] is not None:
+            pygame.draw.line(screen, RED, (0, row * SQUARE_SIZE + SQUARE_SIZE // 2), (WIDTH, row * SQUARE_SIZE + SQUARE_SIZE // 2), LINE_WIDTH)
+            break
+
 def mark_square(row, col, player):
     board[row][col] = player
 
@@ -59,41 +75,19 @@ def is_board_full():
 def check_winner(player):
     for col in range(BOARD_COLS):
         if board[0][col] == board[1][col] == board[2][col] == player:
-            #draw_vertical_winning_line(col, player)
             return True
 
     for row in range(BOARD_ROWS):
         if board[row][0] == board[row][1] == board[row][2] == player:
-            #draw_horizontal_winning_line(row, player)
             return True
 
     if board[2][0] == board[1][1] == board[0][2] == player:
-       # draw_asc_diagonal(player)
         return True
 
     if board[0][0] == board[1][1] == board[2][2] == player:
-        #draw_desc_diagonal(player)
         return True
 
     return False
-
-def draw_vertical_winning_line(col, player):
-    posX = col * SQUARE_SIZE + SQUARE_SIZE // 2
-    color = CIRCLE_COLOR if player == 'O' else CROSS_COLOR
-    pygame.draw.line(screen, color, (posX, 15), (posX, HEIGHT - 115), LINE_WIDTH)
-
-def draw_horizontal_winning_line(row, player):
-    posY = row * SQUARE_SIZE + SQUARE_SIZE // 2
-    color = CIRCLE_COLOR if player == 'O' else CROSS_COLOR
-    pygame.draw.line(screen, color, (15, posY), (WIDTH - 15, posY), LINE_WIDTH)
-
-def draw_asc_diagonal(player):
-    color = CIRCLE_COLOR if player == 'O' else CROSS_COLOR
-    pygame.draw.line(screen, color, (15, HEIGHT - 115), (WIDTH - 15, 15), LINE_WIDTH)
-
-def draw_desc_diagonal(player):
-    color = CIRCLE_COLOR if player == 'O' else CROSS_COLOR
-    pygame.draw.line(screen, color, (15, 15), (WIDTH - 15, HEIGHT - 115), LINE_WIDTH)
 
 def display_message(message):
     text = font.render(message, True, WHITE)
